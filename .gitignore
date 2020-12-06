@@ -1,0 +1,5 @@
+.env
+/venv
+pyvenv.cfg
+
+*.pyc
