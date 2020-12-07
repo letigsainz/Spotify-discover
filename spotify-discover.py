@@ -14,7 +14,7 @@ REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI') # URI to redirect to after gran
 
 # spotify API endpoints
 SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
-
+ME_URL = 'https://api.spotify.com/v1/me'
 
 app = Flask(__name__)
 
@@ -49,12 +49,18 @@ def request_tokens():
     # store tokens
     tokens = {
         'access_token': response['access_token'],
-        'refresh_token': response['refresh_token']
+        'refresh_token': response['refresh_token'],
+        'expires_in': response['expires_in']
     }
     with open('tokens.json', 'w') as outfile:
         json.dump(tokens, outfile)
 
     return 'Successfully completed auth flow!'
+
+
+@app.route('/create_playlist')
+def create_playlist():    
+    pass
 
 
 @app.route('/refresh')
@@ -77,7 +83,8 @@ def refresh_tokens():
     response = r.json()
     tokens = {
         'access_token': response['access_token'],
-        'refresh_token': response['refresh_token']
+        'refresh_token': response['refresh_token'],
+        'expires_in': response['expires_in']
     }
     with open('tokens.json', 'w') as outfile:
         json.dump(tokens, outfile)
