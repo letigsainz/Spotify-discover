@@ -47,27 +47,20 @@ def request_tokens():
         print(key, ':', value)
 
     # store tokens
-    tokens = {
-        'access_token': response['access_token'],
-        'refresh_token': response['refresh_token'],
-        'expires_in': response['expires_in']
-    }
-    with open('tokens.json', 'w') as outfile:
-        json.dump(tokens, outfile)
+    store_tokens(response)
 
     return 'Successfully completed auth flow!'
 
 
 @app.route('/create_playlist')
-def create_playlist():    
+def create_playlist():
     pass
 
 
 @app.route('/refresh')
 def refresh_tokens():
     # get refresh token from json file
-    with open('tokens.json', 'r') as openfile:
-        tokens = json.load(openfile)
+    tokens = get_tokens()
 
     payload = {
         'grant_type': 'refresh_token',
@@ -81,15 +74,26 @@ def refresh_tokens():
 
     # rewrite tokens file with new tokens
     response = r.json()
+    store_tokens(response)
+
+    return 'tokens refreshed!'
+
+# get access/refresh tokens
+def get_tokens():
+    with open('tokens.json', 'r') as openfile:
+        tokens = json.load(openfile)
+    return tokens
+
+# store access/refresh tokens
+def store_tokens(response_data):
     tokens = {
-        'access_token': response['access_token'],
-        'refresh_token': response['refresh_token'],
-        'expires_in': response['expires_in']
+        'access_token': response_data['access_token'],
+        'refresh_token': response_data['refresh_token'],
+        'expires_in': response_data['expires_in']
     }
     with open('tokens.json', 'w') as outfile:
         json.dump(tokens, outfile)
 
-    return 'tokens refreshed!'
 
 if __name__ == '__main__':
    app.run(host='0.0.0.0')
