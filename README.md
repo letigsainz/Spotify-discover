@@ -14,8 +14,8 @@ SPOTIFY_REDIRECT_URI='http://127.0.0.1:5000/callback'
 ```
 
 Create a virtual environment for the project and activate it:
-`virtualenv venv`
-`source venv/bin/activate`
+```virtualenv venv```
+```source venv/bin/activate```
 
 Install required packages:
-`pip install -r requirements.txt`
+```pip install -r requirements.txt```
