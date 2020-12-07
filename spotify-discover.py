@@ -16,9 +16,10 @@ def request_auth():
     return redirect(f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}')
 
 @app.route('/callback')
-def request_access():
-    SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
+def request_tokens():
+    # get code from spotify req param
     code = request.args.get('code')
+    SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
     # necessary request body params
     payload = {
@@ -31,7 +32,19 @@ def request_access():
 
     # Auth flow step 2 - request refresh and access tokens
     r = requests.post(SPOTIFY_TOKEN_URL, data=payload)
-    return r.text
+
+    # parse json
+    response = r.json()
+    print(response)
+    for key, value in response.items():
+        print(key, ':', value)
+
+    # store tokens
+    access_token = response['access_token']
+    refresh_token = response['refresh_token']
+
+    return 'Successfully completed auth flow!'
+
 
 if __name__ == '__main__':
    app.run(host='0.0.0.0')
