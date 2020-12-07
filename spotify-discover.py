@@ -78,13 +78,13 @@ def refresh_tokens():
 
     return 'tokens refreshed!'
 
-
+# get access/refresh tokens
 def get_tokens():
     with open('tokens.json', 'r') as openfile:
         tokens = json.load(openfile)
-
     return tokens
 
+# store access/refresh tokens
 def store_tokens(response_data):
     tokens = {
         'access_token': response_data['access_token'],
