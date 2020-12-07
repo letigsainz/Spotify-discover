@@ -2,11 +2,19 @@ import os
 from flask import Flask, redirect, request
 from dotenv import load_dotenv
 import requests
+import base64
+import json
 
 load_dotenv() # load environment variables
+
+# client info
 CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI') # URI to redirect to after granting user permission
+
+# spotify API endpoints
+SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
+
 
 app = Flask(__name__)
 
@@ -19,7 +27,6 @@ def request_auth():
 def request_tokens():
     # get code from spotify req param
     code = request.args.get('code')
-    SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
     # necessary request body params
     payload = {
@@ -40,11 +47,42 @@ def request_tokens():
         print(key, ':', value)
 
     # store tokens
-    access_token = response['access_token']
-    refresh_token = response['refresh_token']
+    tokens = {
+        'access_token': response['access_token'],
+        'refresh_token': response['refresh_token']
+    }
+    with open('tokens.json', 'w') as outfile:
+        json.dump(tokens, outfile)
 
     return 'Successfully completed auth flow!'
 
+
+@app.route('/refresh')
+def refresh_tokens():
+    # get refresh token from json file
+    with open('tokens.json', 'r') as openfile:
+        tokens = json.load(openfile)
+
+    payload = {
+        'grant_type': 'refresh_token',
+        'refresh_token': tokens['refresh_token']
+    }
+    base64encoded = str(base64.b64encode(f'{CLIENT_ID}:{CLIENT_SECRET}'.encode('ascii')), 'ascii')
+    headers = {'Authorization': f'Basic {base64encoded}'}
+
+    # post request for new tokens
+    r = requests.post(SPOTIFY_TOKEN_URL, data=payload, headers=headers)
+
+    # rewrite tokens file with new tokens
+    response = r.json()
+    tokens = {
+        'access_token': response['access_token'],
+        'refresh_token': response['refresh_token']
+    }
+    with open('tokens.json', 'w') as outfile:
+        json.dump(tokens, outfile)
+
+    return 'tokens refreshed!'
 
 if __name__ == '__main__':
    app.run(host='0.0.0.0')
