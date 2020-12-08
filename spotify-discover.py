@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import requests
 import base64
 import json
+from datetime import datetime, timedelta
 
 load_dotenv() # load environment variables
 
@@ -91,31 +92,50 @@ def get_artists():
 @app.route('/get_albums/')
 def get_albums():
     tokens = get_tokens()
-    album_ids = []
     artist_ids = session['artist_ids']
+    album_ids = []
 
-    print(f'Artist Ids: {artist_ids}')
-    debug_response = {}
+    # set time frame for new releases (2 weeks)
+    today = datetime.now()
+    two_weeks = timedelta(weeks=2)
+    time_frame = (today - two_weeks).date()
+    # print(time_frame)
+
+    # debug_response = {}
     # get albums for each artist
     for id in artist_ids:
-        uri = f'https://api.spotify.com/v1/artists/{id}/albums'
+        uri = f'https://api.spotify.com/v1/artists/{id}/albums?country=US'
         headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
         r = requests.get(uri, headers=headers)
         response = r.json()
-        debug_response[id] = response
+        # debug_response[id] = response
         # get each album's id
-        # albums = response['items']
-        # for album in albums:
-        #     album_ids.append(album['id'])
+        albums = response['items']
+        for album in albums:
+            # check for tracks that are new releases (2 weeks)
+            try:
+                release_date = datetime.strptime(album['release_date'], '%Y-%m-%d') # convert release_date string to datetime
+                if release_date.date() > time_frame:
+                    album_ids.append(album['id'])
+            except ValueError:
+                # there appear to be some older release dates that only contain year (2007) - irrelevant
+                print(f'Release date found with format: {album["release_date"]}')
 
-    # print('Album ids received!')
-    return debug_response
+
+    print('Album ids received!')
+    # print(len(album_ids))
+    # print(album_ids)
+    # return debug_response
+    session['album_ids'] = album_ids
+    return redirect('/get_albums/tracks')
 
 
-# Get each individual album's release date and tracks
-@app.route('/get_albums/album')
+# Get each individual "album's" track uri's
+@app.route('/get_albums/tracks')
 def get_album():
-    pass
+    album_ids = session['album_ids']
+    print(album_ids)
+    return 'hi'
 
 
 @app.route('/refresh')
