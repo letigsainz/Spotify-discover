@@ -21,7 +21,8 @@ app = Flask(__name__)
 @app.route('/')
 def request_auth():
     # Auth flow step 1 - request authorization
-    return redirect(f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}')
+    scope = 'user-top-read playlist-modify-public user-follow-read'
+    return redirect(f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope={scope}')
 
 @app.route('/callback')
 def request_tokens():
@@ -54,7 +55,14 @@ def request_tokens():
 
 @app.route('/create_playlist')
 def create_playlist():
-    pass
+    tokens = get_tokens()
+    # if tokens['expires_in'] < 60:
+    #     redirect('/refresh')
+    uri = 'https://api.spotify.com/v1/me/top/artists'
+    headers = {'Authorization': f'Bearer {tokens["access_token"]}', }
+    r = requests.get(uri, headers=headers)
+    
+    return r.text
 
 
 @app.route('/refresh')
