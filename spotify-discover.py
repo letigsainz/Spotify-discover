@@ -16,6 +16,8 @@ REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI') # URI to redirect to after gran
 SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 ME_URL = 'https://api.spotify.com/v1/me'
 TOP_ARTISTS_URL = 'https://api.spotify.com/v1/me/top/artists'
+MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
+GET_ARTIST_ALBUMS_URL = 'https://api.spotify.com/v1/artists/{id}/albums'
 
 app = Flask(__name__)
 
@@ -60,11 +62,24 @@ def create_playlist():
     tokens = get_tokens()
     # if tokens['expires_in'] < 60:
     #     redirect('/refresh')
+
+    # request to get user's top artists
     uri = TOP_ARTISTS_URL
     headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
     r = requests.get(uri, headers=headers)
 
-    return r.text
+    # set up to get artist ID's
+    response = r.json()
+    artists = response['items']
+    artist_ids = []
+
+    for artist in artists:
+        artist_ids.append(artist['id'])
+
+    print(artist_ids)
+
+
+    return r.json()
 
 
 @app.route('/refresh')
