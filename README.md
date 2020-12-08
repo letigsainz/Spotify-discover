@@ -11,6 +11,7 @@ Set up a .env file in the project directory that looks like this:
 SPOTIFY_CLIENT_ID='<your_client_id>'
 SPOTIFY_CLIENT_SECRET='<your_client_secret>'
 SPOTIFY_REDIRECT_URI='http://127.0.0.1:5000/callback'
+SPOTIFY_USER_ID='<your_user_id>'
 ```
 
 Create a virtual environment for the project and activate it:
