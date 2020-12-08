@@ -19,7 +19,7 @@ USER_ID = os.getenv('SPOTIFY_USER_ID')
 SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 ME_URL = 'https://api.spotify.com/v1/me'
 TOP_ARTISTS_URL = 'https://api.spotify.com/v1/me/top/artists'
-MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
+MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artists'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
@@ -79,7 +79,7 @@ def get_artists():
 
 
 # Get all albums for each of our top artists (albums, singles, compilations)
-@app.route('/get_albums/')
+@app.route('/get_albums')
 def get_albums():
     tokens = get_tokens()
     artist_ids = session['artist_ids']
@@ -94,7 +94,7 @@ def get_albums():
     # debug_response = {}
     # get albums for each artist
     for id in artist_ids:
-        uri = f'https://api.spotify.com/v1/artists/{id}/albums?country=US'
+        uri = f'https://api.spotify.com/v1/artists/{id}/albums?include_groups=album,single&country=US'
         headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
         r = requests.get(uri, headers=headers)
         response = r.json()
@@ -141,6 +141,7 @@ def get_tracks():
             track_uris.append(album['uri'])
 
     store_track_uris(track_uris)
+    print(len(track_uris))
 
     # return debug_response
     return redirect('/create_playlist')
@@ -159,20 +160,62 @@ def create_playlist():
     payload = {'name': playlist_name}
     r = requests.post(uri, headers=headers, data=json.dumps(payload))
     response = r.json()
+    print(response)
 
-    return response
-    # return redirect('/add_to_playlist')
+    session['playlist_id'] = response['id'] # store new playlist's id
+
+    # return response
+    return redirect('/add_to_playlist')
 
 # Add new releases to your newly created playlist
 @app.route('/add_to_playlist')
 def add_to_playlist():
     tokens = get_tokens()
+    playlist_id = session['playlist_id']
 
     # create a JSON array of track URI's to be passed in the requests (100 max at a time)
     track_uris = get_track_uris()
-    print(track_uris)
+    # print(track_uris)
 
-    return 'ADDED TO PLAYLIST'
+    # split up the request if number of tracks is too big, Spotify API max 100
+    tracks_list = track_uris['uris']
+    number_of_tracks = len(tracks_list)
+    print(number_of_tracks)
+
+    if number_of_tracks > 200:
+        # split track_uris list into 3 sub lists
+        three_split = np.array_split(tracks_list, 3)
+        # post request to add new releases to playlist
+        for lst in three_split:
+            uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+            headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
+            payload = {'uris': list(lst)} # convert ndarray to list
+            r = requests.post(uri, headers=headers, data=json.dumps(payload))
+            response = r.json()
+            # print(lst)
+
+    elif number_of_tracks > 100:
+        # split track_uris list into 2 sub lists
+        two_split = np.array_split(tracks_list, 2)
+        # post request to add new releases to playlist
+        for lst in three_split:
+            uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+            headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
+            payload = {'uris': list(lst)} # convert ndarray to list
+            r = requests.post(uri, headers=headers, data=json.dumps(payload))
+            response = r.json()
+            # print(lst)
+
+    else:
+        uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+        headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
+        payload = {'uris': tracks_list}
+        r = requests.post(uri, headers=headers, data=json.dumps(payload))
+        response = r.json()
+        # print(tracks_list)
+
+    print('added to playlist!')
+    return response
 
 
 @app.route('/refresh')
