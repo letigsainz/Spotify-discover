@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect, request
+from flask import Flask, redirect, request, url_for
 from dotenv import load_dotenv
 import requests
 import base64
@@ -17,7 +17,8 @@ SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 ME_URL = 'https://api.spotify.com/v1/me'
 TOP_ARTISTS_URL = 'https://api.spotify.com/v1/me/top/artists'
 MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
-GET_ARTIST_ALBUMS_URL = 'https://api.spotify.com/v1/artists/{id}/albums'
+GET_ALL_ARTIST_ALBUMS_URL = 'https://api.spotify.com/v1/artists/{id}/albums'
+GET_ALBUM_URL = 'https://api.spotify.com/v1/albums/{id}'
 
 app = Flask(__name__)
 
@@ -54,16 +55,46 @@ def request_tokens():
     store_tokens(response)
     print('Successfully completed auth flow!')
 
-    return redirect('/create_playlist')
+    return redirect('/get_artists')
 
 
-@app.route('/create_playlist')
+# Create a playlist of new releases
+@app.route('/create_playlist/')
 def create_playlist():
     tokens = get_tokens()
     # if tokens['expires_in'] < 60:
     #     redirect('/refresh')
 
-    # request to get user's top artists
+    # request to get each artist's albums (all music)
+    # returns all albums, singles, compilations
+    # artists_albums = {}
+    # for id in artist_ids:
+    #     uri = f'https://api.spotify.com/v1/artists/{id}/albums'
+    #     headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
+    #     r = requests.get(uri, headers=headers)
+    #     artists_albums[id] = []#list of albums
+
+    # uri = f'https://api.spotify.com/v1/artists/{artist_ids[0]}/albums?country=US'
+    # headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
+    # r = requests.get(uri, headers=headers)
+    # response = r.json()
+    #
+    # album_ids = []
+    # albums = response['items']
+    # for album in albums:
+    #     album_ids.append(album['id'])
+    #
+    # print(album_ids)
+    #
+    # return r2.json()
+    pass
+
+
+# Get user's top artists
+@app.route('/get_artists')
+def get_artists():
+    tokens = get_tokens()
+
     uri = TOP_ARTISTS_URL
     headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
     r = requests.get(uri, headers=headers)
@@ -75,11 +106,21 @@ def create_playlist():
 
     for artist in artists:
         artist_ids.append(artist['id'])
+    # print(artist_ids)
 
-    print(artist_ids)
+    return redirect(url_for('create_playlist', artist_ids=artist_ids))
 
 
-    return r.json()
+# Get all albums for each of our top artists
+@app.route('/get_albums/<artist_ids>')
+def get_albums(artist_ids):
+    pass
+
+
+# Get each individual album's release date and tracks
+@app.route('/get_albums/album')
+def get_album():
+    pass
 
 
 @app.route('/refresh')
