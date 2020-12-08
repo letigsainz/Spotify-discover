@@ -2,4 +2,4 @@
 /venv
 *.pyc
 *.txt
-tokens.json
+*.json
