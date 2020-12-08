@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect, request, url_for
+from flask import Flask, redirect, request, url_for, session
 from dotenv import load_dotenv
 import requests
 import base64
@@ -21,6 +21,7 @@ GET_ALL_ARTIST_ALBUMS_URL = 'https://api.spotify.com/v1/artists/{id}/albums'
 GET_ALBUM_URL = 'https://api.spotify.com/v1/albums/{id}'
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY')
 
 @app.route('/')
 def request_auth():
@@ -47,9 +48,6 @@ def request_tokens():
 
     # parse json
     response = r.json()
-    # print(response)
-    # for key, value in response.items():
-    #     print(key, ':', value)
 
     # store tokens
     store_tokens(response)
@@ -64,29 +62,6 @@ def create_playlist():
     tokens = get_tokens()
     # if tokens['expires_in'] < 60:
     #     redirect('/refresh')
-
-    # request to get each artist's albums (all music)
-    # returns all albums, singles, compilations
-    # artists_albums = {}
-    # for id in artist_ids:
-    #     uri = f'https://api.spotify.com/v1/artists/{id}/albums'
-    #     headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
-    #     r = requests.get(uri, headers=headers)
-    #     artists_albums[id] = []#list of albums
-
-    # uri = f'https://api.spotify.com/v1/artists/{artist_ids[0]}/albums?country=US'
-    # headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
-    # r = requests.get(uri, headers=headers)
-    # response = r.json()
-    #
-    # album_ids = []
-    # albums = response['items']
-    # for album in albums:
-    #     album_ids.append(album['id'])
-    #
-    # print(album_ids)
-    #
-    # return r2.json()
     pass
 
 
@@ -108,13 +83,33 @@ def get_artists():
         artist_ids.append(artist['id'])
     # print(artist_ids)
 
-    return redirect(url_for('create_playlist', artist_ids=artist_ids))
+    session['artist_ids'] = artist_ids
+    return redirect('/get_albums')
 
 
-# Get all albums for each of our top artists
-@app.route('/get_albums/<artist_ids>')
-def get_albums(artist_ids):
-    pass
+# Get all albums for each of our top artists (albums, singles, compilations)
+@app.route('/get_albums/')
+def get_albums():
+    tokens = get_tokens()
+    album_ids = []
+    artist_ids = session['artist_ids']
+
+    print(f'Artist Ids: {artist_ids}')
+    debug_response = {}
+    # get albums for each artist
+    for id in artist_ids:
+        uri = f'https://api.spotify.com/v1/artists/{id}/albums'
+        headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
+        r = requests.get(uri, headers=headers)
+        response = r.json()
+        debug_response[id] = response
+        # get each album's id
+        # albums = response['items']
+        # for album in albums:
+        #     album_ids.append(album['id'])
+
+    # print('Album ids received!')
+    return debug_response
 
 
 # Get each individual album's release date and tracks
