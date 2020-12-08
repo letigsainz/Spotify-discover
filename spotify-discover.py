@@ -141,38 +141,7 @@ def get_tracks():
             track_uris.append(album['uri'])
 
     store_track_uris(track_uris)
-    # store tracks in smaller lists to avoid large data set in session and for create_playlist request (100 max)
-    # if len(track_uris) > 200:
-    #     three_split = np.array_split(track_uris, 6) # split track_uris list into 3 sub lists
-    #     track_uris_a = list(three_split[0])
-    #     track_uris_b = list(three_split[1])
-    #     track_uris_c = list(three_split[2])
-    #
-    #     # print(track_uris)
-    #     print(len(track_uris_a))
-    #     print(len(track_uris_b))
-    #     print(len(track_uris_c))
-    #
-    #     session['track_uris_a'] = track_uris_a
-    #     session['track_uris_b'] = track_uris_b
-    #     session['track_uris_c'] = track_uris_c
-    #
-    # elif len(track_uris) > 100:
-    #     two_split = np.array_split(track_uris, 4) # split track_uris list into 3 sub lists
-    #     track_uris_a = list(three_split[0])
-    #     track_uris_b = list(three_split[1])
-    #
-    #     # print(track_uris)
-    #     print(len(track_uris_a))
-    #     print(len(track_uris_b))
-    #
-    #     session['track_uris_a'] = track_uris_a
-    #     session['track_uris_b'] = track_uris_b
-    #
-    # else:
-    #     session['track_uris'] = track_uris
 
-    # session['number_of_tracks'] = len(track_uris)
     # return debug_response
     return redirect('/create_playlist')
 
@@ -190,7 +159,6 @@ def create_playlist():
     payload = {'name': playlist_name}
     r = requests.post(uri, headers=headers, data=json.dumps(payload))
     response = r.json()
-    # print(r.status)
 
     return response
     # return redirect('/add_to_playlist')
