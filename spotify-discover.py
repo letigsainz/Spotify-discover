@@ -15,6 +15,7 @@ REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI') # URI to redirect to after gran
 # spotify API endpoints
 SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 ME_URL = 'https://api.spotify.com/v1/me'
+TOP_ARTISTS_URL = 'https://api.spotify.com/v1/me/top/artists'
 
 app = Flask(__name__)
 
@@ -43,14 +44,15 @@ def request_tokens():
 
     # parse json
     response = r.json()
-    print(response)
-    for key, value in response.items():
-        print(key, ':', value)
+    # print(response)
+    # for key, value in response.items():
+    #     print(key, ':', value)
 
     # store tokens
     store_tokens(response)
+    print('Successfully completed auth flow!')
 
-    return 'Successfully completed auth flow!'
+    return redirect('/create_playlist')
 
 
 @app.route('/create_playlist')
@@ -58,10 +60,10 @@ def create_playlist():
     tokens = get_tokens()
     # if tokens['expires_in'] < 60:
     #     redirect('/refresh')
-    uri = 'https://api.spotify.com/v1/me/top/artists'
-    headers = {'Authorization': f'Bearer {tokens["access_token"]}', }
+    uri = TOP_ARTISTS_URL
+    headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
     r = requests.get(uri, headers=headers)
-    
+
     return r.text
 
 
@@ -85,6 +87,7 @@ def refresh_tokens():
     store_tokens(response)
 
     return 'tokens refreshed!'
+    # return redirect('/create_playlist')
 
 # get access/refresh tokens
 def get_tokens():
