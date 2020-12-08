@@ -1,5 +1,5 @@
 .env
 /venv
 *.pyc
-readme.txt
-tokens.json
+*.txt
+*.json
