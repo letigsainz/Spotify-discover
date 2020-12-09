@@ -62,22 +62,23 @@ def get_artists():
     if tokens['expires_in'] < 100:
         redirect('/refresh')
 
-    uri = TOP_ARTISTS_URL
+    uri = MY_FOLLOWED_ARTISTS_URL
     headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
     r = requests.get(uri, headers=headers)
 
     # set up to get artist ID's
     response = r.json()
-    artists = response['items']
-    artist_ids = []
+    # artists = response['items']
+    # artist_ids = []
+    #
+    # for artist in artists:
+    #     artist_ids.append(artist['id'])
+    #
+    # print('Retrieved artist IDs!')
+    # session['artist_ids'] = artist_ids
 
-    for artist in artists:
-        artist_ids.append(artist['id'])
-
-    print('Retrieved artist IDs!')
-    session['artist_ids'] = artist_ids
-
-    return redirect('/get_albums')
+    # return redirect('/get_albums')
+    return response
 
 
 # Get all albums for each of our top artists (albums, singles, compilations)
