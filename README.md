@@ -25,7 +25,7 @@ SECRET_KEY= '<your_secret_key>'
 ```
 The SECRET_KEY is used by flask to keep data safe (encryption). You must set the secret key in order to use session in flask.
 
-Create a secret key using the following command. Copy the resulting string into your .env file.
+Create a secret key using the following command. Copy the resulting string into the SECRET_KEY variable in your .env file.
 ```
 $ python -c 'import os; print(os.urandom(16))'
 
