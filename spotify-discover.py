@@ -50,7 +50,7 @@ def request_tokens():
 
     # store tokens
     store_tokens(response)
-    print('Successfully completed auth flow!')
+    print(f'{r.status_code} - Successfully completed Auth flow!')
 
     return redirect('/get_artists')
 
@@ -73,9 +73,10 @@ def get_artists():
 
     for artist in artists:
         artist_ids.append(artist['id'])
-    # print(artist_ids)
 
+    print('Retrieved artist IDs!')
     session['artist_ids'] = artist_ids
+
     return redirect('/get_albums')
 
 
@@ -90,7 +91,6 @@ def get_albums():
     today = datetime.now()
     two_weeks = timedelta(weeks=4)
     time_frame = (today - two_weeks).date()
-    # print(time_frame)
 
     # debug_response = {}
     # get albums for each artist
@@ -108,17 +108,13 @@ def get_albums():
                 release_date = datetime.strptime(album['release_date'], '%Y-%m-%d') # convert release_date string to datetime
                 if release_date.date() > time_frame:
                     album_ids.append(album['id'])
-                    # print(release_date)
             except ValueError:
                 # there appear to be some older release dates that only contain year (2007) - irrelevant
                 print(f'Release date found with format: {album["release_date"]}')
 
-
-    print('Album ids received!')
-    # print(len(album_ids))
-    # print(album_ids)
-    # return debug_response
     session['album_ids'] = album_ids
+    print('Retrieved album IDs!')
+    # return debug_response
     return redirect('/get_tracks')
 
 
@@ -127,7 +123,6 @@ def get_albums():
 def get_tracks():
     tokens = get_tokens()
     album_ids = session['album_ids']
-    # print(album_ids)
 
     # debug_response = {}
     track_uris = []
@@ -142,7 +137,8 @@ def get_tracks():
             track_uris.append(album['uri'])
 
     store_track_uris(track_uris)
-    print(len(track_uris))
+    # print(len(track_uris))
+    print('Retrieved tracks!')
 
     # return debug_response
     return redirect('/create_playlist')
@@ -152,19 +148,20 @@ def get_tracks():
 @app.route('/create_playlist')
 def create_playlist():
     tokens = get_tokens()
-    playlist_name = (date.today()).strftime('%m-%d-%Y')
+    current_date = (date.today()).strftime('%m-%d-%Y')
+    playlist_name = f'New Monthly Releases - {current_date}'
 
     uri = f'https://api.spotify.com/v1/users/{USER_ID}/playlists'
     headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
     payload = {'name': playlist_name}
     r = requests.post(uri, headers=headers, data=json.dumps(payload))
     response = r.json()
-    print(r.status_code)
-    print(response)
+    # print(response)
 
     session['playlist_id'] = response['id'] # store new playlist's id
     session['playlist_url'] = response['external_urls']['spotify'] # store new playlist url
 
+    print(f'{r.status_code} - Created playlist!')
     return redirect('/add_to_playlist')
 
 # Add new releases to your newly created playlist
@@ -175,12 +172,10 @@ def add_to_playlist():
 
     # get track_uris dict
     track_uris = get_track_uris()
-    # print(track_uris)
 
     # split up the request if number of tracks is too big, Spotify API max 100
     tracks_list = track_uris['uris']
     number_of_tracks = len(tracks_list)
-    print(number_of_tracks)
 
     if number_of_tracks > 200:
         # split track_uris list into 3 sub lists
@@ -192,7 +187,6 @@ def add_to_playlist():
             payload = {'uris': list(lst)} # convert ndarray to list
             r = requests.post(uri, headers=headers, data=json.dumps(payload))
             response = r.json()
-            # print(lst)
 
     elif number_of_tracks > 100:
         # split track_uris list into 2 sub lists
@@ -204,7 +198,6 @@ def add_to_playlist():
             payload = {'uris': list(lst)} # convert ndarray to list
             r = requests.post(uri, headers=headers, data=json.dumps(payload))
             response = r.json()
-            # print(lst)
 
     else:
         uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
@@ -212,10 +205,8 @@ def add_to_playlist():
         payload = {'uris': tracks_list}
         r = requests.post(uri, headers=headers, data=json.dumps(payload))
         response = r.json()
-        # print(tracks_list)
 
-    print(r.status_code)
-    print('added to playlist!')
+    print('Added tracks to playlist!')
     return redirect(session['playlist_url'])
 
 
