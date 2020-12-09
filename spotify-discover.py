@@ -60,6 +60,8 @@ def request_tokens():
 @app.route('/get_artists')
 def get_artists():
     tokens = get_tokens()
+    if tokens['expires_in'] < 100:
+        redirect('/refresh')
 
     uri = TOP_ARTISTS_URL
     headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
@@ -85,9 +87,9 @@ def get_albums():
     artist_ids = session['artist_ids']
     album_ids = []
 
-    # set time frame for new releases (2 weeks)
+    # set time frame for new releases (4 weeks)
     today = datetime.now()
-    two_weeks = timedelta(weeks=2)
+    two_weeks = timedelta(weeks=4)
     time_frame = (today - two_weeks).date()
     # print(time_frame)
 
@@ -102,7 +104,7 @@ def get_albums():
         # get each album's id
         albums = response['items']
         for album in albums:
-            # check for tracks that are new releases (2 weeks)
+            # check for tracks that are new releases (4 weeks)
             try:
                 release_date = datetime.strptime(album['release_date'], '%Y-%m-%d') # convert release_date string to datetime
                 if release_date.date() > time_frame:
@@ -160,6 +162,7 @@ def create_playlist():
     payload = {'name': playlist_name}
     r = requests.post(uri, headers=headers, data=json.dumps(payload))
     response = r.json()
+    print(r.status_code)
     print(response)
 
     session['playlist_id'] = response['id'] # store new playlist's id
@@ -214,6 +217,7 @@ def add_to_playlist():
         response = r.json()
         # print(tracks_list)
 
+    print(r.status_code)
     print('added to playlist!')
     return response
 
@@ -235,10 +239,11 @@ def refresh_tokens():
 
     # rewrite tokens file with new tokens
     response = r.json()
-    store_tokens(response)
+    refresh_tokens(response['access_token'], tokens['refresh_token'], response['expires_in'])
 
-    return 'tokens refreshed!'
-    # return redirect('/create_playlist')
+    print('Tokens refreshed!')
+    # return 'tokens refreshed!'
+    return redirect('/get_artists')
 
 # get access/refresh tokens
 def get_tokens():
@@ -256,6 +261,16 @@ def store_tokens(response_data):
     with open('tokens.json', 'w') as outfile:
         json.dump(tokens, outfile)
 
+# refresh tokens
+def refresh_tokens(access_token, refresh_token, expires_in):
+    tokens = {
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'expires_in': expires_in
+    }
+    with open('tokens.json', 'w') as outfile:
+        json.dump(tokens, outfile)
+
 # store track_uris from get_tracks() in a dictionary - need
 def store_track_uris(track_uris):
     uri_dict = {'uris': track_uris}
@@ -267,6 +282,12 @@ def get_track_uris():
     with open('track_uris.json', 'r') as openfile:
         uri_dict = json.load(openfile)
     return uri_dict
+
+# check for token expiration
+# def is_token_expired(tokens):
+#     if tokens['expires_in'] < 50:
+#         redirect('/refresh')
+#     return False
 
 
 if __name__ == '__main__':
