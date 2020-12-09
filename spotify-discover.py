@@ -18,17 +18,18 @@ USER_ID = os.getenv('SPOTIFY_USER_ID')
 # spotify API endpoints
 SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 ME_URL = 'https://api.spotify.com/v1/me'
-TOP_ARTISTS_URL = 'https://api.spotify.com/v1/me/top/artists'
 MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
 
 @app.route('/')
 def request_auth():
     # Auth flow step 1 - request authorization
     scope = 'user-top-read playlist-modify-public playlist-modify-private user-follow-read'
     return redirect(f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope={scope}')
+
 
 @app.route('/callback')
 def request_tokens():
