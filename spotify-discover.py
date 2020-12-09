@@ -1,11 +1,11 @@
-import os
-from flask import Flask, redirect, request, url_for, session
+from flask import Flask, redirect, request, session
+from datetime import datetime, timedelta, date
 from dotenv import load_dotenv
+import numpy as np
 import requests
 import base64
 import json
-from datetime import datetime, timedelta, date
-import numpy as np
+import os
 
 load_dotenv() # load environment variables
 
@@ -19,7 +19,7 @@ USER_ID = os.getenv('SPOTIFY_USER_ID')
 SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 ME_URL = 'https://api.spotify.com/v1/me'
 TOP_ARTISTS_URL = 'https://api.spotify.com/v1/me/top/artists'
-MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artists'
+MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
@@ -173,7 +173,7 @@ def add_to_playlist():
     tokens = get_tokens()
     playlist_id = session['playlist_id']
 
-    # create a JSON array of track URI's to be passed in the requests (100 max at a time)
+    # get track_uris dict
     track_uris = get_track_uris()
     # print(track_uris)
 
