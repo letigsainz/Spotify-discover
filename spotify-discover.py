@@ -43,7 +43,6 @@ def request_tokens():
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET
     }
-
     # Auth flow step 2 - request refresh and access tokens
     r = requests.post(SPOTIFY_TOKEN_URL, data=payload)
     # parse json
@@ -153,8 +152,6 @@ def get_tracks():
 @app.route('/create_playlist')
 def create_playlist():
     tokens = get_tokens()
-    # if tokens['expires_in'] < 60:
-    #     redirect('/refresh')
     playlist_name = (date.today()).strftime('%m-%d-%Y')
 
     uri = f'https://api.spotify.com/v1/users/{USER_ID}/playlists'
@@ -166,8 +163,8 @@ def create_playlist():
     print(response)
 
     session['playlist_id'] = response['id'] # store new playlist's id
+    session['playlist_url'] = response['external_urls']['spotify'] # store new playlist url
 
-    # return response
     return redirect('/add_to_playlist')
 
 # Add new releases to your newly created playlist
@@ -219,7 +216,7 @@ def add_to_playlist():
 
     print(r.status_code)
     print('added to playlist!')
-    return response
+    return redirect(session['playlist_url'])
 
 
 @app.route('/refresh')
@@ -242,7 +239,6 @@ def refresh_tokens():
     refresh_tokens(response['access_token'], tokens['refresh_token'], response['expires_in'])
 
     print('Tokens refreshed!')
-    # return 'tokens refreshed!'
     return redirect('/get_artists')
 
 # get access/refresh tokens
@@ -282,12 +278,6 @@ def get_track_uris():
     with open('track_uris.json', 'r') as openfile:
         uri_dict = json.load(openfile)
     return uri_dict
-
-# check for token expiration
-# def is_token_expired(tokens):
-#     if tokens['expires_in'] < 50:
-#         redirect('/refresh')
-#     return False
 
 
 if __name__ == '__main__':
