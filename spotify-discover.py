@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date
 from dotenv import load_dotenv
 import helpers as hp
 import numpy as np
+import threading
 import requests
 import base64
 import json
@@ -218,6 +219,9 @@ def add_to_playlist():
         response = r.json()
 
     print('Added tracks to playlist!')
+
+    # redirect to playlsit page & shut down flask server
+    hp.shutdown_server(request.environ)
     return redirect(session['playlist_url'])
 
 

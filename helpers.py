@@ -1,3 +1,4 @@
+from flask import redirect
 import json
 # Helper functions for spotify-discover
 
@@ -38,3 +39,11 @@ def get_track_uris():
     with open('track_uris.json', 'r') as openfile:
         uri_dict = json.load(openfile)
     return uri_dict
+
+# Shut down the flask server
+def shutdown_server(environ):
+    # look for dev server shutdown function in request environment
+    if not 'werkzeug.server.shutdown' in environ:
+        raise RuntimeError('Not running the development server')
+    environ['werkzeug.server.shutdown']() # call the shutdown function
+    print('Shutting down server...')
