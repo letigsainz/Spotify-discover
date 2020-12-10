@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, date
 from dotenv import load_dotenv
 import helpers as hp
 import numpy as np
-import threading
 import requests
 import base64
 import json
@@ -24,6 +23,8 @@ MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+hp.open_browser() # open browser automatically
 
 
 @app.route('/')
