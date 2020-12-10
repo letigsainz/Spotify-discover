@@ -1,6 +1,7 @@
 from flask import Flask, redirect, request, session
 from datetime import datetime, timedelta, date
 from dotenv import load_dotenv
+import helpers as hp
 import numpy as np
 import requests
 import base64
@@ -49,7 +50,7 @@ def request_tokens():
     response = r.json() # parse json
 
     # store tokens
-    store_tokens(response)
+    hp.store_tokens(response)
     print(f'{r.status_code} - Successfully completed Auth flow!')
 
     return redirect('/get_artists')
@@ -58,7 +59,7 @@ def request_tokens():
 # Get user's followed artists
 @app.route('/get_artists')
 def get_artists():
-    tokens = get_tokens()
+    tokens = hp.get_tokens()
     if tokens['expires_in'] < 100:
         redirect('/refresh')
 
@@ -92,7 +93,7 @@ def get_artists():
 # Get all albums for each followed artist (albums, singles)
 @app.route('/get_albums')
 def get_albums():
-    tokens = get_tokens()
+    tokens = hp.get_tokens()
     artist_ids = session['artist_ids']
     album_ids = []
 
@@ -129,7 +130,7 @@ def get_albums():
 # Get each individual "album's" track uri's
 @app.route('/get_tracks')
 def get_tracks():
-    tokens = get_tokens()
+    tokens = hp.get_tokens()
     album_ids = session['album_ids']
 
     # debug_response = {}
@@ -146,7 +147,7 @@ def get_tracks():
         for album in response['items']:
             track_uris.append(album['uri'])
 
-    store_track_uris(track_uris)
+    hp.store_track_uris(track_uris)
     print('Retrieved tracks!')
 
     # return debug_response
@@ -156,7 +157,7 @@ def get_tracks():
 # Create a new playlist in user account
 @app.route('/create_playlist')
 def create_playlist():
-    tokens = get_tokens()
+    tokens = hp.get_tokens()
     current_date = (date.today()).strftime('%m-%d-%Y')
     playlist_name = f'New Monthly Releases - {current_date}'
 
@@ -177,11 +178,11 @@ def create_playlist():
 # Add new music releases to our newly created playlist
 @app.route('/add_to_playlist')
 def add_to_playlist():
-    tokens = get_tokens()
+    tokens = hp.get_tokens()
     playlist_id = session['playlist_id']
 
     # get track_uris dict
-    track_uris = get_track_uris()
+    track_uris = hp.get_track_uris()
 
     # split up the request if number of tracks is too big. Spotify API max 100 per req.
     tracks_list = track_uris['uris']
@@ -224,7 +225,7 @@ def add_to_playlist():
 @app.route('/refresh')
 def refresh_tokens():
     # get refresh token from json file
-    tokens = get_tokens()
+    tokens = hp.get_tokens()
 
     payload = {
         'grant_type': 'refresh_token',
@@ -238,49 +239,10 @@ def refresh_tokens():
 
     # rewrite tokens file with new tokens
     response = r.json()
-    refresh_tokens(response['access_token'], tokens['refresh_token'], response['expires_in'])
+    hp.refresh_tokens(response['access_token'], tokens['refresh_token'], response['expires_in'])
 
     print('Tokens refreshed!')
     return redirect('/get_artists')
-
-
-# get access/refresh tokens
-def get_tokens():
-    with open('tokens.json', 'r') as openfile:
-        tokens = json.load(openfile)
-    return tokens
-
-# store access/refresh tokens
-def store_tokens(response_data):
-    tokens = {
-        'access_token': response_data['access_token'],
-        'refresh_token': response_data['refresh_token'],
-        'expires_in': response_data['expires_in']
-    }
-    with open('tokens.json', 'w') as outfile:
-        json.dump(tokens, outfile)
-
-# refresh tokens
-def refresh_tokens(access_token, refresh_token, expires_in):
-    tokens = {
-        'access_token': access_token,
-        'refresh_token': refresh_token,
-        'expires_in': expires_in
-    }
-    with open('tokens.json', 'w') as outfile:
-        json.dump(tokens, outfile)
-
-# store track_uris from get_tracks() in a dictionary - need
-def store_track_uris(track_uris):
-    uri_dict = {'uris': track_uris}
-    with open('track_uris.json', 'w') as outfile:
-        json.dump(uri_dict, outfile)
-
-# retrieve track_uris
-def get_track_uris():
-    with open('track_uris.json', 'r') as openfile:
-        uri_dict = json.load(openfile)
-    return uri_dict
 
 
 if __name__ == '__main__':
