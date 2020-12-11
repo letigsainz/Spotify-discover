@@ -98,6 +98,7 @@ def get_albums():
     tokens = hp.get_tokens()
     artist_ids = session['artist_ids']
     album_ids = []
+    album_names = {} # used to check for duplicates with different id's * issue with some albums
 
     # set time frame for new releases (4 weeks)
     today = datetime.now()
@@ -117,15 +118,19 @@ def get_albums():
             # check for tracks that are new releases (4 weeks)
             try:
                 release_date = datetime.strptime(album['release_date'], '%Y-%m-%d') # convert release_date string to datetime
+                album_name = album['name']
+                artist_name = album['artists'][0]['name']
                 if release_date.date() > time_frame:
-                    album_ids.append(album['id'])
+                    # if we do find a duplicate album name, check if it's by a different artist
+                    if album_name not in album_names or artist_name != album_names[album_name]:
+                        album_ids.append(album['id'])
+                        album_names[album_name] = artist_name
             except ValueError:
                 # there appear to be some older release dates that only contain year (2007) - irrelevant
                 print(f'Release date found with format: {album["release_date"]}')
 
     session['album_ids'] = album_ids
     print('Retrieved album IDs!')
-
     return redirect('/get_tracks')
 
 
