@@ -36,7 +36,7 @@ b'_5#y2L"F4Q8z\n\xec]/'
 
 Create a virtual environment within your project directory and activate it (not required, but highly recommended)
 ```
-virtualenv venv
+python3 -m venv venv
 ```
 ```
 source venv/bin/activate
