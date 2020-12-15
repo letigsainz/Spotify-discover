@@ -49,6 +49,6 @@ pip install -r requirements.txt
 
 Start up the server:
 ```
-export FLASK_APP=spotify_discover.py
+export FLASK_APP=spotify-discover.py
 python -m flask run
 ```

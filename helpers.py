@@ -1,7 +1,6 @@
-from flask import redirect
+### Helper functions for spotify-discover ###
 import webbrowser
 import json
-# Helper functions for spotify-discover
 
 # open browser at address where app is running locally
 def open_browser():
@@ -9,7 +8,7 @@ def open_browser():
         url = 'http://127.0.0.1:5000/'
         webbrowser.open(url)
     except Exception:
-        print('You need to manually open your browser and navigate to: http://127.0.0.1:5000/')    
+        print('You need to manually open your browser and navigate to: http://127.0.0.1:5000/')
 
 # get access/refresh tokens
 def get_tokens():

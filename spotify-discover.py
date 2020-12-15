@@ -18,7 +18,6 @@ USER_ID = os.getenv('SPOTIFY_USER_ID')
 
 # spotify API endpoints
 SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
-ME_URL = 'https://api.spotify.com/v1/me'
 MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
 
 app = Flask(__name__)
@@ -256,4 +255,4 @@ def refresh_tokens():
 
 
 if __name__ == '__main__':
-   app.run(host='0.0.0.0')
+   app.run()
