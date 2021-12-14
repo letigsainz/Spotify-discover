@@ -9,7 +9,7 @@ It uses the Spotify Web API to access your followed artists, check if they've re
 
 Make sure you have Python3 installed.
 
-[Register](https://developer.spotify.com/documentation/general/guides/app-settings/#register-your-app) your application with ``http://127.0.0.1:5000/callback`` as the redirect URI to obtain a client ID and secret.
+[Register](https://developer.spotify.com/documentation/general/guides/authorization/app-settings/) your application with ``http://127.0.0.1:5000/callback`` as the redirect URI to obtain a client ID and secret.
 
 ## Setup
 
