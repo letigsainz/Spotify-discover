@@ -22,8 +22,7 @@ MY_FOLLOWED_ARTISTS_URL = 'https://api.spotify.com/v1/me/following?type=artist'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-
-hp.open_browser() # open browser automatically
+hp.open_browser()
 
 
 @app.route('/')
@@ -61,19 +60,15 @@ def request_tokens():
 @app.route('/get_artists')
 def get_artists():
     tokens = hp.get_tokens()
-    if tokens['expires_in'] < 100:
-        redirect('/refresh')
+    hp.check_expiration(tokens)
 
-    # Make request to get followed artists endpoint
-    uri = MY_FOLLOWED_ARTISTS_URL
+    # Get request to followed artists endpoint
     headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
-    r = requests.get(uri, headers=headers)
+    r = requests.get(MY_FOLLOWED_ARTISTS_URL, headers=headers)
     response = r.json()
 
-    # Get artist ID's setup
     artist_ids = []
     artists = response['artists']['items']
-
     for artist in artists:
         artist_ids.append(artist['id'])
 
@@ -91,27 +86,26 @@ def get_artists():
     return redirect('/get_albums')
 
 
-# Get all albums for each followed artist (albums, singles)
+# Get all albums by followed artists (albums, singles)
 @app.route('/get_albums')
 def get_albums():
     tokens = hp.get_tokens()
+    hp.check_expiration(tokens)
     artist_ids = session['artist_ids']
     album_ids = []
     album_names = {} # used to check for duplicates with different id's * issue with some albums
 
     # set time frame for new releases (4 weeks)
     today = datetime.now()
-    two_weeks = timedelta(weeks=4)
-    time_frame = (today - two_weeks).date()
+    number_weeks = timedelta(weeks=4)
+    time_frame = (today - number_weeks).date()
 
-    # get albums for each artist
     for id in artist_ids:
         uri = f'https://api.spotify.com/v1/artists/{id}/albums?include_groups=album,single&country=US'
         headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
         r = requests.get(uri, headers=headers)
         response = r.json()
 
-        # get each album's id
         albums = response['items']
         for album in albums:
             # check for tracks that are new releases (4 weeks)
@@ -137,26 +131,22 @@ def get_albums():
 @app.route('/get_tracks')
 def get_tracks():
     tokens = hp.get_tokens()
+    hp.check_expiration(tokens)
     album_ids = session['album_ids']
-
-    # debug_response = {}
     track_uris = []
 
-    # get tracks for each album
     for id in album_ids:
         uri = f'https://api.spotify.com/v1/albums/{id}/tracks'
         headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
         r = requests.get(uri, headers=headers)
         response = r.json()
-        # debug_response[id] = response
 
-        for album in response['items']:
-            track_uris.append(album['uri'])
+        for track in response['items']:
+            track_uris.append(track['uri'])
 
     hp.store_track_uris(track_uris)
     print('Retrieved tracks!')
 
-    # return debug_response
     return redirect('/create_playlist')
 
 
@@ -164,6 +154,7 @@ def get_tracks():
 @app.route('/create_playlist')
 def create_playlist():
     tokens = hp.get_tokens()
+    hp.check_expiration(tokens)
     current_date = (date.today()).strftime('%m-%d-%Y')
     playlist_name = f'New Monthly Releases - {current_date}'
 
@@ -185,9 +176,8 @@ def create_playlist():
 @app.route('/add_to_playlist')
 def add_to_playlist():
     tokens = hp.get_tokens()
+    hp.check_expiration(tokens)
     playlist_id = session['playlist_id']
-
-    # get track_uris dict
     track_uris = hp.get_track_uris()
 
     # split up the request if number of tracks is too big. Spotify API max 100 per req.
@@ -197,31 +187,17 @@ def add_to_playlist():
     # split track_uris list into 3 sub lists
     if number_of_tracks > 200:
         three_split = np.array_split(tracks_list, 3)
-        # post request to add new releases to playlist
         for lst in three_split:
-            uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
-            headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
-            payload = {'uris': list(lst)} # convert ndarray to list
-            r = requests.post(uri, headers=headers, data=json.dumps(payload))
-            response = r.json()
+            hp.add_tracks(tokens, playlist_id, list(lst))
 
     # split track_uris list into 2 sub lists
     elif number_of_tracks > 100:
         two_split = np.array_split(tracks_list, 2)
-        # post request to add new releases to playlist
         for lst in two_split:
-            uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
-            headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
-            payload = {'uris': list(lst)} # convert ndarray to list
-            r = requests.post(uri, headers=headers, data=json.dumps(payload))
-            response = r.json()
+            hp.add_tracks(tokens, playlist_id, list(lst))
 
     else:
-        uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
-        headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
-        payload = {'uris': tracks_list}
-        r = requests.post(uri, headers=headers, data=json.dumps(payload))
-        response = r.json()
+        hp.add_tracks(tokens, playlist_id, tracks_list)
 
     print('Added tracks to playlist!')
 
@@ -233,9 +209,7 @@ def add_to_playlist():
 # Refresh access token near expiration
 @app.route('/refresh')
 def refresh_tokens():
-    # get refresh token from json file
     tokens = hp.get_tokens()
-
     payload = {
         'grant_type': 'refresh_token',
         'refresh_token': tokens['refresh_token']
@@ -245,8 +219,6 @@ def refresh_tokens():
 
     # post request for new tokens
     r = requests.post(SPOTIFY_TOKEN_URL, data=payload, headers=headers)
-
-    # rewrite tokens file with new tokens
     response = r.json()
     hp.refresh_tokens(response['access_token'], tokens['refresh_token'], response['expires_in'])
 

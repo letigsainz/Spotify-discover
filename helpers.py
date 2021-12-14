@@ -1,5 +1,6 @@
-### Helper functions for spotify-discover ###
+from flask import redirect
 import webbrowser
+import requests
 import json
 
 # open browser at address where app is running locally
@@ -15,6 +16,11 @@ def get_tokens():
     with open('tokens.json', 'r') as openfile:
         tokens = json.load(openfile)
     return tokens
+
+# check access token expiration
+def check_expiration(tokens):
+    if tokens['expires_in'] < 100:
+        return redirect('/refresh')
 
 # store access/refresh tokens
 def store_tokens(response_data):
@@ -36,7 +42,7 @@ def refresh_tokens(access_token, refresh_token, expires_in):
     with open('tokens.json', 'w') as outfile:
         json.dump(tokens, outfile)
 
-# store track_uris from get_tracks() in a dictionary - need
+# store track_uris in a dictionary
 def store_track_uris(track_uris):
     uri_dict = {'uris': track_uris}
     with open('track_uris.json', 'w') as outfile:
@@ -47,6 +53,13 @@ def get_track_uris():
     with open('track_uris.json', 'r') as openfile:
         uri_dict = json.load(openfile)
     return uri_dict
+
+# post request to add tracks to playlist
+def add_tracks(tokens, playlist_id, tracks_list):
+    uri = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+    headers = {'Authorization': f'Bearer {tokens["access_token"]}', 'Content-Type': 'application/json'}
+    payload = {'uris': tracks_list}
+    r = requests.post(uri, headers=headers, data=json.dumps(payload))
 
 # Shut down the flask server
 def shutdown_server(environ):
