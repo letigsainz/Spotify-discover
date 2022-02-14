@@ -1,5 +1,8 @@
 # Spotify Discover
 
+:bangbang: New Version (full stack) -> https://github.com/lgsainz/FS-Spotify-Discover ‼️
+
+
 ## About The Project
 This flask app is meant to run locally every month and allow the user to discover new music.
 
