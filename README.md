@@ -1,6 +1,6 @@
 # Spotify Discover
 
-:bangbang: New Version (full stack) -> https://github.com/lgsainz/FS-Spotify-Discover ‼️
+:bangbang: New Version (full stack) -> https://github.com/lgsainz/Spotify-Discover-v2 ‼️
 
 
 ## About The Project
